@@ -45,7 +45,7 @@ func main() {
 			logger.Fatal("application failed", zap.Error(err))
 			return
 		}
-	case "db", "postgres", "pg":
+	case "db":
 		if err = app.NewAppPostgres(cfg); err != nil {
 			logger.Fatal("application failed", zap.Error(err))
 			return

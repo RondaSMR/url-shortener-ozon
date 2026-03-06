@@ -20,15 +20,9 @@ type router struct {
 func Router(
 	ginGroup *gin.RouterGroup,
 	urlUsecase Usecase,
-	user string,
-	pass string,
 ) {
 	r := router{urlUsecase: urlUsecase}
 
-	ginGroup.Use(gin.BasicAuth(gin.Accounts{
-		user: pass,
-	}))
-
 	ginGroup.POST("", r.CreateShortURL)
-	ginGroup.GET("", r.GetShortURL)
+	ginGroup.GET("/:shortURL", r.GetShortURL)
 }

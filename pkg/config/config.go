@@ -11,15 +11,13 @@ import (
 
 type HttpServer struct {
 	Address string `env:"HTTP_SERVER_ADDRESS" yaml:"address"`
-	User    string `env:"HTTP_SERVER_USER" yaml:"user"`
-	Pass    string `env:"HTTP_SERVER_PASS" yaml:"pass"`
 }
 
 type AppConfig struct {
 	PathConfig  string     `env:"PATH_CONFIG"`
 	ServiceName string     `env:"SERVICE_NAME" yaml:"serviceName"`
 	Debug       bool       `env:"DEBUG" yaml:"debug"`
-	StorageMode string     `env:"STORAGE_MODE" envDefault:"postgres" yaml:"storageMode"`
+	StorageMode string     `env:"STORAGE_MODE" envDefault:"db"`
 	PGStorage   pgStorage  `yaml:"pgStorage"`
 	HTTPServer  HttpServer `yaml:"http_server"`
 }

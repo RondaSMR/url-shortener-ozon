@@ -145,5 +145,5 @@ func routersInit(
 	usecase urlshortener.Usecase,
 	srv config.HttpServer,
 ) {
-	urlshortener.Router(router.Group("url-shortener-ozon"), usecase, srv.User, srv.Pass)
+	urlshortener.Router(router.Group("url-shortener-ozon"), usecase)
 }
