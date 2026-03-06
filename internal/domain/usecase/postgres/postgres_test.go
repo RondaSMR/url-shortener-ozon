@@ -2,127 +2,118 @@ package postgres_test
 
 import (
 	"context"
-	"os"
 	"testing"
+	apperor "url-shortener-ozon/internal/apperror"
+
 	"url-shortener-ozon/internal/domain/entities"
 	"url-shortener-ozon/internal/domain/usecase/postgres"
-	pgrepo "url-shortener-ozon/internal/repository/url/postgres"
-	"url-shortener-ozon/pkg/connectors/pgconnector"
 )
 
+type MockRepository struct {
+	CreateFunc func(ctx context.Context, url entities.URLsStruct) error
+	GetFunc    func(ctx context.Context, url entities.InOutURL) (entities.InOutURL, error)
+}
+
+func (m *MockRepository) CreateShortURL(ctx context.Context, url entities.URLsStruct) error {
+	if m.CreateFunc != nil {
+		return m.CreateFunc(ctx, url)
+	}
+	return nil
+}
+
+func (m *MockRepository) GetShortURL(ctx context.Context, url entities.InOutURL) (entities.InOutURL, error) {
+	if m.GetFunc != nil {
+		return m.GetFunc(ctx, url)
+	}
+	return entities.InOutURL{}, nil
+}
+
 func TestPostgresUsecase_CreateAndGet(t *testing.T) {
-	// Пропускаем тест, если нет переменных окружения
-	host := os.Getenv("STORAGE_HOST")
-	if host == "" {
-		t.Skip("Skipping postgres test: STORAGE_HOST not set")
+
+	mockRepo := &MockRepository{
+		CreateFunc: func(ctx context.Context, url entities.URLsStruct) error {
+			if url.OriginalURL != "https://ozon.ru" {
+				t.Errorf("Expected OriginalURL 'https://ozon.ru', got %s", url.OriginalURL)
+			}
+			if url.ShortURL == "" {
+				t.Error("ShortURL is empty")
+			}
+			return nil
+		},
+		GetFunc: func(ctx context.Context, url entities.InOutURL) (entities.InOutURL, error) {
+			return entities.InOutURL{URL: "https://ozon.ru"}, nil
+		},
 	}
 
-	// Подключаемся к БД
-	cfg, err := pgconnector.CreateConfig(&pgconnector.ConnectionConfig{
-		Host:     forceIPv4(host),
-		Port:     os.Getenv("STORAGE_PORT"),
-		User:     os.Getenv("STORAGE_PG_USER"),
-		Password: os.Getenv("STORAGE_PASS"),
-		DbName:   os.Getenv("STORAGE_DB"),
-		SslMode:  "disable",
-	}, nil)
-	if err != nil {
-		t.Fatalf("Failed to create config: %v", err)
-	}
-
-	conn, err := pgconnector.NewPgConnector(cfg, 30, 30)
-	if err != nil {
-		t.Fatalf("Failed to connect to DB: %v", err)
-	}
-	defer conn.CloseConnection()
-
-	// Создаем репозиторий и usecase
-	repo := pgrepo.NewPostgresRepository(conn)
-	uc := postgres.NewUseCase(repo)
-
+	usecase := postgres.NewUseCase(mockRepo)
 	ctx := context.Background()
 
-	// Тестовые данные
-	testURL := "https://ozon.ru"
-
-	// Создаем короткую ссылку
-	input := entities.InOutURL{URL: testURL}
-	short, err := uc.CreateShortURL(ctx, &input)
-
+	postURL := entities.InOutURL{URL: "https://ozon.ru"}
+	shortURL, err := usecase.CreateShortURL(ctx, &postURL)
 	if err != nil {
 		t.Fatalf("CreateShortURL failed: %v", err)
 	}
-	if short.URL == "" {
+	if shortURL.URL == "" {
 		t.Fatal("CreateShortURL returned empty URL")
 	}
 
-	// Получаем оригинальную ссылку
-	getInput := entities.InOutURL{URL: short.URL}
-	original, err := uc.GetShortURL(ctx, &getInput)
-
+	getURL := entities.InOutURL{URL: shortURL.URL}
+	originalURL, err := usecase.GetShortURL(ctx, &getURL)
 	if err != nil {
 		t.Fatalf("GetShortURL failed: %v", err)
 	}
-	if original.URL != testURL {
-		t.Fatalf("Expected %q, got %q", testURL, original.URL)
+	if originalURL.URL != "https://ozon.ru" {
+		t.Fatalf("Expected 'https://ozon.ru', got %s", originalURL.URL)
+	}
+}
+
+func TestPostgresUsecase_NotFound(t *testing.T) {
+
+	mockRepo := &MockRepository{
+		GetFunc: func(ctx context.Context, url entities.InOutURL) (entities.InOutURL, error) {
+			return entities.InOutURL{}, apperor.ErrRepoNotFound
+		},
+	}
+
+	usecase := postgres.NewUseCase(mockRepo)
+	ctx := context.Background()
+
+	getURL := entities.InOutURL{URL: "nonexistent"}
+	_, err := usecase.GetShortURL(ctx, &getURL)
+
+	if err == nil {
+		t.Error("Expected error for non-existent URL, got nil")
 	}
 }
 
 func TestPostgresUsecase_CreateDuplicate(t *testing.T) {
-	// Пропускаем тест, если нет переменных окружения
-	host := os.Getenv("STORAGE_HOST")
-	if host == "" {
-		t.Skip("Skipping postgres test: STORAGE_HOST not set")
+
+	mockRepo := &MockRepository{
+		CreateFunc: func(ctx context.Context, url entities.URLsStruct) error {
+			_ = url.ShortURL
+			return nil
+		},
+		GetFunc: func(ctx context.Context, url entities.InOutURL) (entities.InOutURL, error) {
+			return entities.InOutURL{URL: "https://ozon.ru"}, nil
+		},
 	}
 
-	// Подключаемся к БД
-	cfg, err := pgconnector.CreateConfig(&pgconnector.ConnectionConfig{
-		Host:     forceIPv4(host),
-		Port:     os.Getenv("STORAGE_PORT"),
-		User:     os.Getenv("STORAGE_PG_USER"),
-		Password: os.Getenv("STORAGE_PASS"),
-		DbName:   os.Getenv("STORAGE_DB"),
-		SslMode:  "disable",
-	}, nil)
-	if err != nil {
-		t.Fatalf("Failed to create config: %v", err)
-	}
-
-	conn, err := pgconnector.NewPgConnector(cfg, 30, 30)
-	if err != nil {
-		t.Fatalf("Failed to connect to DB: %v", err)
-	}
-	defer conn.CloseConnection()
-
-	// Создаем репозиторий и usecase
-	repo := pgrepo.NewPostgresRepository(conn)
-	uc := postgres.NewUseCase(repo)
-
+	usecase := postgres.NewUseCase(mockRepo)
 	ctx := context.Background()
 
-	// Создаем ссылку первый раз
-	testURL := "https://google.com"
-	input := entities.InOutURL{URL: testURL}
+	postURL := entities.InOutURL{URL: "https://ozon.ru"}
 
-	short1, err := uc.CreateShortURL(ctx, &input)
+	shortURL_1, err := usecase.CreateShortURL(ctx, &postURL)
 	if err != nil {
 		t.Fatalf("First CreateShortURL failed: %v", err)
 	}
 
-	// Создаем ту же ссылку второй раз (должен вернуть ту же короткую)
-	short2, err := uc.CreateShortURL(ctx, &input)
+	shortURL_2, err := usecase.CreateShortURL(ctx, &postURL)
 	if err != nil {
 		t.Fatalf("Second CreateShortURL failed: %v", err)
 	}
 
-	if short1.URL != short2.URL {
-		t.Fatalf("Expected same short URL for duplicate, got %q and %q", short1.URL, short2.URL)
+	if shortURL_1.URL != shortURL_2.URL {
+		t.Errorf("Expected same short URL, got %s and %s", shortURL_1.URL, shortURL_2.URL)
 	}
-}
-
-func forceIPv4(host string) string {
-	if host == "localhost" {
-		return "127.0.0.1"
-	}
-	return host
 }

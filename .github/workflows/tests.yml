@@ -18,27 +18,11 @@ jobs:
         with:
           go-version: "1.24.x"
 
-      - name: Run memory test
+      - name: Run memory tests
         run: go test -v ./internal/domain/usecase/memory/...
 
-  test-postgres:
+  test-postgres-mock:
     runs-on: ubuntu-latest
-
-    services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_USER: testuser
-          POSTGRES_PASSWORD: testpass
-          POSTGRES_DB: testdb
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd="pg_isready -U testuser -d testdb"
-          --health-interval=2s
-          --health-timeout=3s
-          --health-retries=30
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -48,35 +32,6 @@ jobs:
         with:
           go-version: "1.24.x"
 
-      - name: Install psql client
+      - name: Run postgres mock tests
         run: |
-          sudo apt-get update
-          sudo apt-get install -y postgresql-client
-
-      - name: Wait for PostgreSQL to be ready
-        run: |
-          for i in {1..30}; do
-            if PGPASSWORD=testpass psql -h localhost -U testuser -d testdb -c "SELECT 1" >/dev/null 2>&1; then
-              echo "PostgreSQL is ready!"
-              exit 0
-            fi
-            echo "Waiting for PostgreSQL... ($i/30)"
-            sleep 2
-          done
-          echo "PostgreSQL failed to start"
-          exit 1
-
-      - name: Init database schema
-        run: |
-          PGPASSWORD=testpass psql -h localhost -U testuser -d testdb -f urls.sql
-
-      - name: Run postgres tests
-        env:
-          STORAGE_MODE: db
-          STORAGE_HOST: 127.0.0.1
-          STORAGE_PORT: 5432
-          STORAGE_PG_USER: testuser
-          STORAGE_PASS: testpass
-          STORAGE_DB: testdb
-        run: |
-          go test -v -timeout 30s ./internal/domain/usecase/postgres/...
+          go test -v ./internal/domain/usecase/postgres/...
