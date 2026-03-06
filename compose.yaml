@@ -1,0 +1,53 @@
+services:
+  app:
+    build: .
+    profiles: ["memory"]
+    env_file:
+      - .env
+    environment:
+      STORAGE_MODE: memory
+      PATH_CONFIG: /app/config.yaml
+    volumes:
+      - ./.config.yaml:/app/config.yaml:ro
+    ports:
+      - "8080:8080"
+
+  app-db:
+    build: .
+    profiles: ["db"]
+    env_file:
+      - .env
+    environment:
+      STORAGE_MODE: db
+      PATH_CONFIG: /app/config.yaml
+    volumes:
+      - ./.config.yaml:/app/config.yaml:ro
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:16-alpine
+    profiles: ["db"]
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./urls.sql:/docker-entrypoint-initdb.d/01-urls.sql:ro
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+volumes:
+  pgdata:

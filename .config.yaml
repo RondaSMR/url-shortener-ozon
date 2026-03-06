@@ -1,0 +1,7 @@
+debug: true
+serviceName: url-shortener-ozon
+pgStorage:
+  host: "postgres"
+  port: 5432
+http_server:
+  address: "0.0.0.0:8080"
