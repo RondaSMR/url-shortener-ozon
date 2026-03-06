@@ -34,10 +34,10 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd="pg_isready -U testuser"
-          --health-interval=5s
-          --health-timeout=5s
-          --health-retries=5
+          --health-cmd="pg_isready -U testuser -d testdb"
+          --health-interval=2s
+          --health-timeout=3s
+          --health-retries=30
 
     steps:
       - name: Checkout
@@ -47,6 +47,24 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: "1.24.x"
+
+      - name: Install psql client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      - name: Wait for PostgreSQL to be ready
+        run: |
+          for i in {1..30}; do
+            if PGPASSWORD=testpass psql -h localhost -U testuser -d testdb -c "SELECT 1" >/dev/null 2>&1; then
+              echo "PostgreSQL is ready!"
+              exit 0
+            fi
+            echo "Waiting for PostgreSQL... ($i/30)"
+            sleep 2
+          done
+          echo "PostgreSQL failed to start"
+          exit 1
 
       - name: Init database schema
         run: |
@@ -61,4 +79,4 @@ jobs:
           STORAGE_PASS: testpass
           STORAGE_DB: testdb
         run: |
-          go test -v ./internal/domain/usecase/postgres/...
+          go test -v -timeout 30s ./internal/domain/usecase/postgres/...

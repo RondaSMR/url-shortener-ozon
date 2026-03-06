@@ -4,7 +4,6 @@ import (
 	"context"
 	"os"
 	"testing"
-
 	"url-shortener-ozon/internal/domain/entities"
 	"url-shortener-ozon/internal/domain/usecase/postgres"
 	pgrepo "url-shortener-ozon/internal/repository/url/postgres"
@@ -31,7 +30,7 @@ func TestPostgresUsecase_CreateAndGet(t *testing.T) {
 		t.Fatalf("Failed to create config: %v", err)
 	}
 
-	conn, err := pgconnector.NewPgConnector(cfg, 5, 5)
+	conn, err := pgconnector.NewPgConnector(cfg, 30, 30)
 	if err != nil {
 		t.Fatalf("Failed to connect to DB: %v", err)
 	}
@@ -89,7 +88,7 @@ func TestPostgresUsecase_CreateDuplicate(t *testing.T) {
 		t.Fatalf("Failed to create config: %v", err)
 	}
 
-	conn, err := pgconnector.NewPgConnector(cfg, 5, 5)
+	conn, err := pgconnector.NewPgConnector(cfg, 30, 30)
 	if err != nil {
 		t.Fatalf("Failed to connect to DB: %v", err)
 	}
@@ -102,7 +101,7 @@ func TestPostgresUsecase_CreateDuplicate(t *testing.T) {
 	ctx := context.Background()
 
 	// Создаем ссылку первый раз
-	testURL := "https://ozon.ru"
+	testURL := "https://google.com"
 	input := entities.InOutURL{URL: testURL}
 
 	short1, err := uc.CreateShortURL(ctx, &input)
