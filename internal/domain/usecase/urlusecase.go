@@ -1,4 +1,4 @@
-package memory
+package usecase
 
 import (
 	"context"
@@ -12,7 +12,6 @@ import (
 
 var _ urlshortener.Usecase = new(Usecase)
 
-// Repository описывает функционал записи информации
 type Repository interface {
 	CreateShortURL(ctx context.Context, url entities.URLsStruct) error
 	GetShortURL(ctx context.Context, url entities.InOutURL) (entities.InOutURL, error)

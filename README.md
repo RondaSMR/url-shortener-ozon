@@ -2,72 +2,62 @@
 
 ---
 
+## Эндопоинты
+
 Сервер принимает два запроса:
 
-**GET /** - получение оригинальной ссылки по сокращенной
+### POST / - создание сокращенной ссылки
 
 Ожидаемое тело запроса:
 ```json
-{
-  "url": "i9F9AvSymi"
-}
-```
-
-Возможные ответы:
-    
-* `200 OK` - короткая ссылка найдена, оригинальная ссылка возвращена
-```json
-{
-  "success": true,
-  "message": "",
-  "result": {
-    "url": "https://ozon.ru"
-  }
-}
-```
-* `404 Not Found` - короткая ссылка не найдена
-```json
-{
-    "message": "resource not found",
-    "code": "PS-00103"
-}
-```
-* `500 Internal Server Error` - внутренняя ошибка сервера
-
-
-**POST /** - создание сокращенной ссылки
-
-Ожидаемое тело запроса:
-```json
-{
+  {
   "url": "https://ozon.ru"
-}
+  }
 ```
 
 Возможные ответы:
-
 * `201 Created` - сокращенная ссылка успешно создана
 ```json
-{
+  {
   "success": true,
   "message": "",
   "result": {
-    "url": "i9F9AvSymi"
+  "url": "i9F9AvSymi"
   }
-}
+  }
 ```
 * `400 Bad Request` - невалидный JSON или некорректный формат ссылки (допускаются только http:// и https://)
 ```json
+  {
+  "message": "validation error",
+  "code": "PS-00102"
+  }
+```
+* `500 Internal Server Error` - внутренняя ошибка сервера
+
+### GET /{short_URL} - перенаправляет на оригинальный URL
+
+Ожидаемое тело запроса:
+```
+http://localhost:8080/url-shortener-ozon/i9F9AvSymi
+```
+
+Возможные ответы:
+
+* `301 Redirect` - короткая ссылка найдена, происходит редирект на оригинальный URL
+
+* `404 Not Found` - короткая ссылка не найдена
+```json
 {
-    "message": "validation error",
-    "code": "PS-00102"
+  "message": "resource not found",
+  "code": "PS-00103"
 }
 ```
 * `500 Internal Server Error` - внутренняя ошибка сервера
 
 ---
 
-**Алгоритм генерации сокращенных ссылок**
+### Алгоритм генерации сокращенных ссылок
 
 1. Генерация случайной строки фиксированной длины (с использованием соли при коллизиях).
 2. Проверка уникальности сгенерированного кода в хранилище.
@@ -131,6 +121,8 @@
 - **Adapters layer** - адаптеры для HTTP и баз данных
 - Поддержка двух профилей запуска через Docker Compose
 
+---
+
 ### Установка и запуск
 
 1. Клонировать репозиторий.
@@ -159,13 +151,14 @@ docker compose --profile db up -d --build
 
 Приложение будет доступно по адресу: `http://localhost:8080`
 
-### Использование API
+---
 
-**Создание сокращенной ссылки**
+## Использование API
+
+### Создание сокращенной ссылки
 
 ```bash
-curl -i -X POST \                       
-  -u myuser:mypass \
+curl -i -X POST \
   -H "Content-Type: application/json" \
   -d '{"url": "https://ozon.ru"}' \
   "http://localhost:8080/url-shortener-ozon"
@@ -178,31 +171,33 @@ curl -i -X POST \
 # {"success":true,"message":"","result":{"url":"i9F9AvSymi"}}%    
 ```
 
-**Получение оригинальной ссылки**
+### Переход по короткой ссылке
 
+**Через браузер:** просто введите в адресную строку:
+```
+http://localhost:8080/url-shortener-ozon/i9F9AvSymi
+```
+
+**Через curl** (без авто-редиректа, чтобы увидеть заголовки):
 ```bash
-curl -i -X GET \
-  -u myuser:mypass \
-  -H "Content-Type: application/json" \
-  -d '{"url": "i9F9AvSymi"}' \
-  "http://localhost:8080/url-shortener-ozon"
+curl -i "http://localhost:8080/url-shortener-ozon/i9F9AvSymi"
 
-# HTTP/1.1 200 OK
-# Content-Type: application/json; charset=utf-8
-# Date: Fri, 06 Mar 2026 11:46:57 GMT
-# Content-Length: 64
-#
-# {"success":true,"message":"","result":{"url":"https://ozon.ru"}}%    
+# HTTP/1.1 301 Moved Permanently
+# Content-Type: text/html; charset=utf-8
+# Location: https://ozon.ru
+# Date: Fri, 06 Mar 2026 11:45:19 GMT
+# Content-Length: 50
+
+# ...
 ```
 
 **Примеры с ошибками**
 
 Попытка создать ссылку с некорректным форматом:
 ```bash
-curl -i -X POST \                      
-  -u myuser:mypass \                         
-  -H "Content-Type: application/json" \                
-  -d '{"url": "https/ozon.ru"}' \ 
+curl -i -X POST \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https/ozon.ru"}' \
   "http://localhost:8080/url-shortener-ozon"
 
 # HTTP/1.1 400 Bad Request
@@ -215,21 +210,22 @@ curl -i -X POST \
 
 Попытка получить несуществующую ссылку:
 ```bash
-curl -i -X GET \ 
-  -u myuser:mypass \
+curl -i -X GET \
   -H "Content-Type: application/json" \
-  -d '{"url": "i9F9FvSymi"}' \  
+  -d '{"url": "i9F9FvSymi"}' \
   "http://localhost:8080/url-shortener-ozon"
 
 # HTTP/1.1 404 Not Found
-# Content-Type: application/json; charset=utf-8
+# Content-Type: text/plain
 # Date: Fri, 06 Mar 2026 11:49:29 GMT
-# Content-Length: 50
+# Content-Length: 18
 #
-# {"message":"resource not found","code":"PS-00103"}%  
+# 404 page not found%
 ```
 
-### Тестирование
+---
+
+## Тестирование
 
 Проект покрыт тестами для обоих режимов хранения. Запуск тестов осуществляется через GitHub Actions при каждом push в main/master.
 
@@ -237,10 +233,10 @@ curl -i -X GET \
 
 ```bash
 # Тесты для in-memory режима
-STORAGE_MODE=memory go test ./...
+go test -v ./internal/domain/usecase/memory/...
 
 # Тесты для PostgreSQL режима
-STORAGE_MODE=db go test ./...
+go test -v ./internal/domain/usecase/postgres/...
 ```
 
 ### Конфигурация

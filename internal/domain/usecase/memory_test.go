@@ -1,18 +1,18 @@
-package memory_test
+package usecase_test
 
 import (
 	"context"
 	"testing"
 
 	"url-shortener-ozon/internal/domain/entities"
-	"url-shortener-ozon/internal/domain/usecase/memory"
+	"url-shortener-ozon/internal/domain/usecase"
 	memrepo "url-shortener-ozon/internal/repository/url/memory"
 )
 
 func TestMemoryUsecase_CreateAndGet(t *testing.T) {
 	// Создаем репозиторий и usecase
 	repo := memrepo.NewMemoryRepository()
-	uc := memory.NewUseCase(repo)
+	usecase := usecase.NewUseCase(repo)
 
 	ctx := context.Background()
 
@@ -27,7 +27,7 @@ func TestMemoryUsecase_CreateAndGet(t *testing.T) {
 		t.Run(testURL, func(t *testing.T) {
 			// Создаем короткую ссылку
 			input := entities.InOutURL{URL: testURL}
-			short, err := uc.CreateShortURL(ctx, &input)
+			short, err := usecase.CreateShortURL(ctx, &input)
 
 			if err != nil {
 				t.Fatalf("CreateShortURL failed: %v", err)
@@ -38,7 +38,7 @@ func TestMemoryUsecase_CreateAndGet(t *testing.T) {
 
 			// Получаем оригинальную ссылку
 			getInput := entities.InOutURL{URL: short.URL}
-			original, err := uc.GetShortURL(ctx, &getInput)
+			original, err := usecase.GetShortURL(ctx, &getInput)
 
 			if err != nil {
 				t.Fatalf("GetShortURL failed: %v", err)
@@ -52,7 +52,7 @@ func TestMemoryUsecase_CreateAndGet(t *testing.T) {
 
 func TestMemoryUsecase_GetNonExistent(t *testing.T) {
 	repo := memrepo.NewMemoryRepository()
-	uc := memory.NewUseCase(repo)
+	uc := usecase.NewUseCase(repo)
 
 	ctx := context.Background()
 

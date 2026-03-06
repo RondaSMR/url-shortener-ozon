@@ -1,12 +1,12 @@
-package postgres_test
+package usecase_test
 
 import (
 	"context"
 	"testing"
 	apperor "url-shortener-ozon/internal/apperror"
+	"url-shortener-ozon/internal/domain/usecase"
 
 	"url-shortener-ozon/internal/domain/entities"
-	"url-shortener-ozon/internal/domain/usecase/postgres"
 )
 
 type MockRepository struct {
@@ -45,7 +45,7 @@ func TestPostgresUsecase_CreateAndGet(t *testing.T) {
 		},
 	}
 
-	usecase := postgres.NewUseCase(mockRepo)
+	usecase := usecase.NewUseCase(mockRepo)
 	ctx := context.Background()
 
 	postURL := entities.InOutURL{URL: "https://ozon.ru"}
@@ -75,7 +75,7 @@ func TestPostgresUsecase_NotFound(t *testing.T) {
 		},
 	}
 
-	usecase := postgres.NewUseCase(mockRepo)
+	usecase := usecase.NewUseCase(mockRepo)
 	ctx := context.Background()
 
 	getURL := entities.InOutURL{URL: "nonexistent"}
@@ -98,7 +98,7 @@ func TestPostgresUsecase_CreateDuplicate(t *testing.T) {
 		},
 	}
 
-	usecase := postgres.NewUseCase(mockRepo)
+	usecase := usecase.NewUseCase(mockRepo)
 	ctx := context.Background()
 
 	postURL := entities.InOutURL{URL: "https://ozon.ru"}

@@ -13,10 +13,9 @@ import (
 	"syscall"
 	"time"
 	"url-shortener-ozon/internal/controller/http/v1/urlshortener"
-	mem2 "url-shortener-ozon/internal/domain/usecase/memory"
-	pg2 "url-shortener-ozon/internal/domain/usecase/postgres"
-	mem3 "url-shortener-ozon/internal/repository/url/memory"
-	pg3 "url-shortener-ozon/internal/repository/url/postgres"
+	"url-shortener-ozon/internal/domain/usecase"
+	"url-shortener-ozon/internal/repository/url/memory"
+	"url-shortener-ozon/internal/repository/url/postgres"
 	"url-shortener-ozon/pkg/config"
 	"url-shortener-ozon/pkg/connectors/pgconnector"
 )
@@ -65,7 +64,7 @@ func NewAppPostgres(config config.AppConfig) error {
 	router.Use(otelgin.Middleware("url-service"))
 	routersInit(
 		router,
-		pg2.NewUseCase(pg3.NewPostgresRepository(pgStorage)),
+		usecase.NewUseCase(postgres.NewPostgresRepository(pgStorage)),
 		config.HTTPServer,
 	)
 
@@ -110,7 +109,7 @@ func NewAppMemory(config config.AppConfig) error {
 	router.Use(otelgin.Middleware("url-service"))
 	routersInit(
 		router,
-		mem2.NewUseCase(mem3.NewMemoryRepository()),
+		usecase.NewUseCase(memory.NewMemoryRepository()),
 		config.HTTPServer,
 	)
 
