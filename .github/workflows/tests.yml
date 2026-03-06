@@ -73,7 +73,7 @@ jobs:
       - name: Run postgres tests
         env:
           STORAGE_MODE: db
-          STORAGE_HOST: localhost
+          STORAGE_HOST: 127.0.0.1
           STORAGE_PORT: 5432
           STORAGE_PG_USER: testuser
           STORAGE_PASS: testpass
