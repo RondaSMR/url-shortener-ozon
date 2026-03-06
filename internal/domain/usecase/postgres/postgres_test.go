@@ -19,7 +19,7 @@ func TestPostgresUsecase_CreateAndGet(t *testing.T) {
 
 	// Подключаемся к БД
 	cfg, err := pgconnector.CreateConfig(&pgconnector.ConnectionConfig{
-		Host:     host,
+		Host:     forceIPv4(host),
 		Port:     os.Getenv("STORAGE_PORT"),
 		User:     os.Getenv("STORAGE_PG_USER"),
 		Password: os.Getenv("STORAGE_PASS"),
@@ -77,7 +77,7 @@ func TestPostgresUsecase_CreateDuplicate(t *testing.T) {
 
 	// Подключаемся к БД
 	cfg, err := pgconnector.CreateConfig(&pgconnector.ConnectionConfig{
-		Host:     host,
+		Host:     forceIPv4(host),
 		Port:     os.Getenv("STORAGE_PORT"),
 		User:     os.Getenv("STORAGE_PG_USER"),
 		Password: os.Getenv("STORAGE_PASS"),
@@ -118,4 +118,11 @@ func TestPostgresUsecase_CreateDuplicate(t *testing.T) {
 	if short1.URL != short2.URL {
 		t.Fatalf("Expected same short URL for duplicate, got %q and %q", short1.URL, short2.URL)
 	}
+}
+
+func forceIPv4(host string) string {
+	if host == "localhost" {
+		return "127.0.0.1"
+	}
+	return host
 }
