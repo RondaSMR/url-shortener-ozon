@@ -18,16 +18,16 @@ type AppConfig struct {
 	ServiceName string     `env:"SERVICE_NAME" yaml:"serviceName"`
 	Debug       bool       `env:"DEBUG" yaml:"debug"`
 	StorageMode string     `env:"STORAGE_MODE" envDefault:"db"`
-	PGStorage   pgStorage  `yaml:"pgStorage"`
+	PGStorage   PgStorage  `yaml:"pgStorage"`
 	HTTPServer  HttpServer `yaml:"http_server"`
 }
 
-type pgStorage struct {
+type PgStorage struct {
 	Host string `env:"STORAGE_HOST" yaml:"host"`
 	Port int    `env:"STORAGE_PORT" yaml:"port"`
-	User string `env:"STORAGE_PG_USER" yaml:"user"`
-	Pass string `env:"STORAGE_PASS" yaml:"pass"`
-	DB   string `env:"STORAGE_DB"   yaml:"db"`
+	User string `env:"POSTGRES_USER" yaml:"user"`
+	Pass string `env:"POSTGRES_PASSWORD" yaml:"pass"`
+	DB   string `env:"POSTGRES_DB"   yaml:"db"`
 }
 
 // ReadYamlConfig считывает файл конфигурации YAML и сохраняет его содержимое в структуре AppConfig

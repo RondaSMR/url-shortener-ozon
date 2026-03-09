@@ -10,9 +10,14 @@ import (
 )
 
 func main() {
+	cfg := initAppConfig()
+	initStorageMode(cfg)
+}
 
-	// Инициализация конфигурации
+// Инициализация конфигурации
+func initAppConfig() config.AppConfig {
 	var cfg config.AppConfig
+	// Инициализация логгера
 	logger, err := utils.CreateLogger(zap.InfoLevel)
 	if err != nil {
 		log.Fatalf("creating logger failed: %v", err)
@@ -37,20 +42,23 @@ func main() {
 		}
 	}
 	zap.ReplaceGlobals(logger)
+	return cfg
+}
 
+func initStorageMode(cfg config.AppConfig) {
 	// Выбор режима записи укороченных ссылок
 	switch strings.ToLower(strings.TrimSpace(cfg.StorageMode)) {
 	case "memory":
-		if err = app.NewAppMemory(cfg); err != nil {
-			logger.Fatal("application failed", zap.Error(err))
+		if err := app.NewAppMemory(cfg); err != nil {
+			zap.L().Fatal("application failed", zap.Error(err))
 			return
 		}
 	case "db":
-		if err = app.NewAppPostgres(cfg); err != nil {
-			logger.Fatal("application failed", zap.Error(err))
+		if err := app.NewAppPostgres(cfg); err != nil {
+			zap.L().Fatal("application failed", zap.Error(err))
 			return
 		}
 	default:
-		logger.Fatal("unknown STORAGE_MODE", zap.String("storage_mode", cfg.StorageMode))
+		zap.L().Fatal("unknown STORAGE_MODE", zap.String("storage_mode", cfg.StorageMode))
 	}
 }

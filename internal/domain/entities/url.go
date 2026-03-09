@@ -14,6 +14,7 @@ type URLsStruct struct {
 	ShortURL    string
 }
 
+// Validate проверяет поступивший URL
 func (u InOutURL) Validate() error {
 	parsedURL, err := url.ParseRequestURI(u.URL)
 	if err != nil {

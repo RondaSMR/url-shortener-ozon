@@ -13,15 +13,13 @@ import (
 func (r router) CreateShortURL(c *gin.Context) {
 	var urlInput urlapi.InOutURL
 
+	// Парсинг входящего JSON
 	if err := c.ShouldBindJSON(&urlInput); err != nil {
 		apperor.ErrBadRequest.JsonResponse(c, err)
 		return
 	}
-	pointerURL, err := urlapi.AdapterHttpURLToEntity(urlInput)
-	if err != nil {
-		apperor.ErrInternalSystem.JsonResponse(c, err)
-		return
-	}
+	// Форматирование поступившей структуры
+	pointerURL := urlapi.AdapterHttpURLToEntity(urlInput)
 
 	url, err := r.urlUsecase.CreateShortURL(c.Request.Context(), &pointerURL)
 	if err != nil {

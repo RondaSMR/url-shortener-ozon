@@ -2,6 +2,7 @@ package urlshortener
 
 import (
 	"errors"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"url-shortener-ozon/internal/adapters/controller/http/urlapi"
@@ -12,22 +13,16 @@ import (
 func (r router) GetShortURL(c *gin.Context) {
 	var urlInput urlapi.InOutURL
 
+	// Проверка на поступивший URL
 	shortURL := c.Param("shortURL")
 	if shortURL == "" {
-		// Если нет в пути, пробуем из JSON (для обратной совместимости)
-		if err := c.ShouldBindJSON(&urlInput); err != nil || urlInput.URL == "" {
-			apperor.ErrBadRequest.JsonResponse(c, nil)
-			return
-		}
+		apperor.ErrBadRequest.JsonResponse(c, fmt.Errorf("URL is empty"))
+		return
 	} else {
 		urlInput.URL = shortURL
 	}
 
-	pointerURL, err := urlapi.AdapterHttpURLToEntity(urlInput)
-	if err != nil {
-		apperor.ErrInternalSystem.JsonResponse(c, err)
-		return
-	}
+	pointerURL := urlapi.AdapterHttpURLToEntity(urlInput)
 
 	url, err := r.urlUsecase.GetShortURL(c.Request.Context(), &pointerURL)
 	if err != nil {

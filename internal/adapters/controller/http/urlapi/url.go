@@ -9,10 +9,10 @@ type InOutURL struct {
 }
 
 // AdapterHttpURLToEntity форматирует структуру получаемой информации в виде json запроса
-func AdapterHttpURLToEntity(url InOutURL) (entities.InOutURL, error) {
+func AdapterHttpURLToEntity(url InOutURL) entities.InOutURL {
 	return entities.InOutURL{
 		URL: url.URL,
-	}, nil
+	}
 }
 
 // AdapterEntityToHttpURL преобразует структуру в формат json для отправки пользователю

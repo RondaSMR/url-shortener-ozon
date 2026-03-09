@@ -10,34 +10,34 @@
 
 Ожидаемое тело запроса:
 ```json
-  {
+{
   "url": "https://ozon.ru"
-  }
+}
 ```
 
 Возможные ответы:
 * `201 Created` - сокращенная ссылка успешно создана
 ```json
-  {
+{
   "success": true,
   "message": "",
   "result": {
   "url": "i9F9AvSymi"
   }
-  }
+}
 ```
 * `400 Bad Request` - невалидный JSON или некорректный формат ссылки (допускаются только http:// и https://)
 ```json
-  {
+{
   "message": "validation error",
   "code": "PS-00102"
-  }
+}
 ```
 * `500 Internal Server Error` - внутренняя ошибка сервера
 
 ### GET /{short_URL} - перенаправляет на оригинальный URL
 
-Ожидаемое тело запроса:
+Ожидаемый URL:
 ```
 http://localhost:8080/url-shortener-ozon/i9F9AvSymi
 ```
@@ -134,7 +134,7 @@ cd url-shortener-ozon
 2. Создать файл .env из шаблона:
 ```bash
 cp .env.example .env
-# Отредактируйте .env, указав свои пароли
+# Отредактируйте .env, указав свои переменные окружения
 ```
 
 3. Запустить приложение в нужном режиме:
@@ -208,19 +208,16 @@ curl -i -X POST \
 # {"message":"validation error","code":"PS-00102"}%   
 ```
 
-Попытка получить несуществующую ссылку:
+Попытка перейти по несуществующей ссылке:
 ```bash
-curl -i -X GET \
-  -H "Content-Type: application/json" \
-  -d '{"url": "i9F9FvSymi"}' \
-  "http://localhost:8080/url-shortener-ozon"
+curl -i "http://localhost:8080/url-shortener-ozon/i9F9AvSymi"
 
 # HTTP/1.1 404 Not Found
 # Content-Type: text/plain
-# Date: Fri, 06 Mar 2026 11:49:29 GMT
-# Content-Length: 18
+# Content-Type: application/json; charset=utf-8
+# Content-Length: 50
 #
-# 404 page not found%
+# {"message":"resource not found","code":"PS-00103"}%
 ```
 
 ---
@@ -233,10 +230,10 @@ curl -i -X GET \
 
 ```bash
 # Тесты для in-memory режима
-go test -v ./internal/domain/usecase/memory/...
+go test -v ./internal/domain/usecase/... -run TestMemory
 
 # Тесты для PostgreSQL режима
-go test -v ./internal/domain/usecase/postgres/...
+go test -v ./internal/domain/usecase/... -run TestPostgres
 ```
 
 ### Конфигурация

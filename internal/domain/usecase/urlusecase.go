@@ -27,6 +27,7 @@ func NewUseCase(
 	return &Usecase{urlRepository: urlRepository}
 }
 
+// CreateShortURL является бизнес-логикой процесса добавления сокращенной URL ссылки
 func (u Usecase) CreateShortURL(ctx context.Context, url *entities.InOutURL) (entities.InOutURL, error) {
 	// Проверка валидации URL адреса
 	if err := url.Validate(); err != nil {
@@ -60,6 +61,7 @@ func (u Usecase) CreateShortURL(ctx context.Context, url *entities.InOutURL) (en
 	}
 }
 
+// GetShortURL является бизнес-логикой процесса перехода по сокращенной URL ссылки
 func (u Usecase) GetShortURL(ctx context.Context, url *entities.InOutURL) (entities.InOutURL, error) {
 	return u.urlRepository.GetShortURL(ctx, *url)
 }

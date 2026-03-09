@@ -5,6 +5,7 @@ import (
 	"testing"
 	apperor "url-shortener-ozon/internal/apperror"
 	"url-shortener-ozon/internal/domain/usecase"
+	memrepo "url-shortener-ozon/internal/repository/url/memory"
 
 	"url-shortener-ozon/internal/domain/entities"
 )
@@ -45,11 +46,11 @@ func TestPostgresUsecase_CreateAndGet(t *testing.T) {
 		},
 	}
 
-	usecase := usecase.NewUseCase(mockRepo)
+	uc := usecase.NewUseCase(mockRepo)
 	ctx := context.Background()
 
 	postURL := entities.InOutURL{URL: "https://ozon.ru"}
-	shortURL, err := usecase.CreateShortURL(ctx, &postURL)
+	shortURL, err := uc.CreateShortURL(ctx, &postURL)
 	if err != nil {
 		t.Fatalf("CreateShortURL failed: %v", err)
 	}
@@ -58,7 +59,7 @@ func TestPostgresUsecase_CreateAndGet(t *testing.T) {
 	}
 
 	getURL := entities.InOutURL{URL: shortURL.URL}
-	originalURL, err := usecase.GetShortURL(ctx, &getURL)
+	originalURL, err := uc.GetShortURL(ctx, &getURL)
 	if err != nil {
 		t.Fatalf("GetShortURL failed: %v", err)
 	}
@@ -75,11 +76,11 @@ func TestPostgresUsecase_NotFound(t *testing.T) {
 		},
 	}
 
-	usecase := usecase.NewUseCase(mockRepo)
+	uc := usecase.NewUseCase(mockRepo)
 	ctx := context.Background()
 
 	getURL := entities.InOutURL{URL: "nonexistent"}
-	_, err := usecase.GetShortURL(ctx, &getURL)
+	_, err := uc.GetShortURL(ctx, &getURL)
 
 	if err == nil {
 		t.Error("Expected error for non-existent URL, got nil")
@@ -98,22 +99,80 @@ func TestPostgresUsecase_CreateDuplicate(t *testing.T) {
 		},
 	}
 
-	usecase := usecase.NewUseCase(mockRepo)
+	uc := usecase.NewUseCase(mockRepo)
 	ctx := context.Background()
 
 	postURL := entities.InOutURL{URL: "https://ozon.ru"}
 
-	shortURL_1, err := usecase.CreateShortURL(ctx, &postURL)
+	shortURL_1, err := uc.CreateShortURL(ctx, &postURL)
 	if err != nil {
 		t.Fatalf("First CreateShortURL failed: %v", err)
 	}
 
-	shortURL_2, err := usecase.CreateShortURL(ctx, &postURL)
+	shortURL_2, err := uc.CreateShortURL(ctx, &postURL)
 	if err != nil {
 		t.Fatalf("Second CreateShortURL failed: %v", err)
 	}
 
 	if shortURL_1.URL != shortURL_2.URL {
 		t.Errorf("Expected same short URL, got %s and %s", shortURL_1.URL, shortURL_2.URL)
+	}
+}
+
+// ------
+
+func TestMemoryUsecase_CreateAndGet(t *testing.T) {
+	// Создаем репозиторий и usecase
+	repo := memrepo.NewMemoryRepository()
+	uc := usecase.NewUseCase(repo)
+
+	ctx := context.Background()
+
+	// Тестовые данные
+	testURLs := []string{
+		"https://ozon.com",
+		"https://google.com",
+		"https://github.com",
+	}
+
+	for _, testURL := range testURLs {
+		t.Run(testURL, func(t *testing.T) {
+			// Создаем короткую ссылку
+			input := entities.InOutURL{URL: testURL}
+			short, err := uc.CreateShortURL(ctx, &input)
+
+			if err != nil {
+				t.Fatalf("CreateShortURL failed: %v", err)
+			}
+			if short.URL == "" {
+				t.Fatal("CreateShortURL returned empty URL")
+			}
+
+			// Получаем оригинальную ссылку
+			getInput := entities.InOutURL{URL: short.URL}
+			original, err := uc.GetShortURL(ctx, &getInput)
+
+			if err != nil {
+				t.Fatalf("GetShortURL failed: %v", err)
+			}
+			if original.URL != testURL {
+				t.Fatalf("Expected %q, got %q", testURL, original.URL)
+			}
+		})
+	}
+}
+
+func TestMemoryUsecase_GetNonExistent(t *testing.T) {
+	repo := memrepo.NewMemoryRepository()
+	uc := usecase.NewUseCase(repo)
+
+	ctx := context.Background()
+
+	// Пытаемся получить несуществующую ссылку
+	input := entities.InOutURL{URL: "nonexistent"}
+	_, err := uc.GetShortURL(ctx, &input)
+
+	if err == nil {
+		t.Fatal("Expected error for non-existent URL, got nil")
 	}
 }
