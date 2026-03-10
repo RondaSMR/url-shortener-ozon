@@ -14,17 +14,17 @@ type HttpServer struct {
 }
 
 type AppConfig struct {
-	PathConfig  string     `env:"PATH_CONFIG"`
-	ServiceName string     `env:"SERVICE_NAME" yaml:"serviceName"`
-	Debug       bool       `env:"DEBUG" yaml:"debug"`
-	StorageMode string     `env:"STORAGE_MODE" envDefault:"db"`
-	PGStorage   PgStorage  `yaml:"pgStorage"`
-	HTTPServer  HttpServer `yaml:"http_server"`
+	PathConfig  string `env:"PATH_CONFIG"`
+	ServiceName string `env:"SERVICE_NAME" yaml:"serviceName"`
+	Debug       bool   `env:"DEBUG" yaml:"debug"`
+	StorageMode string `env:"STORAGE_MODE" envDefault:"db"`
+	PGStorage   PgStorage
+	HTTPServer  HttpServer
 }
 
 type PgStorage struct {
-	Host string `env:"STORAGE_HOST" yaml:"host"`
-	Port int    `env:"STORAGE_PORT" yaml:"port"`
+	Host string `env:"POSTGRES_HOST" yaml:"host"`
+	Port int    `env:"POSTGRES_PORT" yaml:"port"`
 	User string `env:"POSTGRES_USER" yaml:"user"`
 	Pass string `env:"POSTGRES_PASSWORD" yaml:"pass"`
 	DB   string `env:"POSTGRES_DB"   yaml:"db"`

@@ -1,17 +1,17 @@
-package urlshortener
+package url_shortener
 
 import (
 	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
-	"url-shortener-ozon/internal/adapters/controller/http/urlapi"
 	apperor "url-shortener-ozon/internal/apperror"
+	"url-shortener-ozon/internal/controller/http/entities"
 )
 
-// GetShortURL принимает json запрос и отправляет на обработку
-func (r router) GetShortURL(c *gin.Context) {
-	var urlInput urlapi.InOutURL
+// GetOriginalURLByShortPath принимает json запрос и отправляет на обработку
+func (r router) GetOriginalURLByShortPath(c *gin.Context) {
+	var urlInput entities.RequestDTOData
 
 	// Проверка на поступивший URL
 	shortURL := c.Param("shortURL")
@@ -21,10 +21,10 @@ func (r router) GetShortURL(c *gin.Context) {
 	} else {
 		urlInput.URL = shortURL
 	}
+	// Форматирование поступившей структуры
+	pointerURL := urlInput.ToEntity()
 
-	pointerURL := urlapi.AdapterHttpURLToEntity(urlInput)
-
-	url, err := r.urlUsecase.GetShortURL(c.Request.Context(), &pointerURL)
+	url, err := r.urlUsecase.GetOriginalURLByShortPath(c.Request.Context(), &pointerURL)
 	if err != nil {
 		if errors.Is(err, apperor.ErrRepoNotFound) {
 			apperor.ErrNotFound.JsonResponse(c, err)

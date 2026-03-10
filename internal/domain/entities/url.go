@@ -5,17 +5,21 @@ import (
 	"net/url"
 )
 
-type InOutURL struct {
+type RequestData struct {
+	URL string
+}
+
+type ResponseData struct {
 	URL string
 }
 
 type URLsStruct struct {
 	OriginalURL string
-	ShortURL    string
+	ShortPath   string
 }
 
 // Validate проверяет поступивший URL
-func (u InOutURL) Validate() error {
+func (u RequestData) Validate() error {
 	parsedURL, err := url.ParseRequestURI(u.URL)
 	if err != nil {
 		return fmt.Errorf("invalid URL: %w", err)

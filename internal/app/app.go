@@ -12,7 +12,7 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
-	"url-shortener-ozon/internal/controller/http/v1/urlshortener"
+	"url-shortener-ozon/internal/controller/http/v1/url_shortener"
 	"url-shortener-ozon/internal/domain/usecase"
 	"url-shortener-ozon/internal/repository/url/memory"
 	"url-shortener-ozon/internal/repository/url/postgres"
@@ -90,7 +90,7 @@ func routersInit2(config config.AppConfig, repository usecase.Repository) {
 // Функция инициализации роутера HTTP-запросов
 func routersInit(
 	router *gin.Engine,
-	usecase urlshortener.Usecase,
+	usecase url_shortener.Usecase,
 ) {
-	urlshortener.Router(router.Group("url-shortener-ozon"), usecase)
+	url_shortener.Router(router.Group("url-shortener-ozon"), usecase)
 }

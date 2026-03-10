@@ -1,4 +1,4 @@
-package urlshortener
+package url_shortener
 
 import (
 	"context"
@@ -8,8 +8,8 @@ import (
 
 // Usecase описывает логику приложения
 type Usecase interface {
-	CreateShortURL(ctx context.Context, url *entities.InOutURL) (entities.InOutURL, error)
-	GetShortURL(ctx context.Context, url *entities.InOutURL) (entities.InOutURL, error)
+	CreateShortPath(ctx context.Context, url *entities.RequestData) (entities.ResponseData, error)
+	GetOriginalURLByShortPath(ctx context.Context, url *entities.RequestData) (entities.ResponseData, error)
 }
 
 // router хранит зависимость Usecase
@@ -23,6 +23,6 @@ func Router(
 ) {
 	r := router{urlUsecase: urlUsecase}
 
-	ginGroup.POST("", r.CreateShortURL)
-	ginGroup.GET("/:shortURL", r.GetShortURL)
+	ginGroup.POST("", r.CreateShortPath)
+	ginGroup.GET("/:shortURL", r.GetOriginalURLByShortPath)
 }

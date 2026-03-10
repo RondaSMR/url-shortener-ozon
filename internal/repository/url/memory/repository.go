@@ -6,18 +6,18 @@ import (
 	"url-shortener-ozon/internal/domain/entities"
 )
 
-func (r *Repository) CreateShortURL(_ context.Context, url entities.URLsStruct) error {
-	r.pool[url.ShortURL] = url.OriginalURL
+func (r *Repository) CreateShortPath(_ context.Context, url entities.URLsStruct) error {
+	r.pool[url.ShortPath] = url.OriginalURL
 	return nil
 }
 
-func (r *Repository) GetShortURL(_ context.Context, url entities.InOutURL) (entities.InOutURL, error) {
+func (r *Repository) GetOriginalURLByShortPath(_ context.Context, url entities.RequestData) (entities.ResponseData, error) {
 	originalURL, ok := r.pool[url.URL]
 	if !ok {
-		return entities.InOutURL{}, apperor.ErrRepoNotFound
+		return entities.ResponseData{}, apperor.ErrRepoNotFound
 	}
 
-	return entities.InOutURL{
+	return entities.ResponseData{
 		URL: originalURL,
 	}, nil
 }

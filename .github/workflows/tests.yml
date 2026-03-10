@@ -19,7 +19,7 @@ jobs:
           go-version: "1.24.x"
 
       - name: Run memory tests
-        run: go test -v ./internal/domain/usecase/... -run TestMemory
+        run: go test -v ./internal/domain/usecase/... -run WithPostgres
 
   test-postgres-mock:
     runs-on: ubuntu-latest
@@ -33,4 +33,4 @@ jobs:
           go-version: "1.24.x"
 
       - name: Run postgres mock tests
-        run: go test -v ./internal/domain/usecase/... -run TestPostgres
+        run: go test -v ./internal/domain/usecase/... -run WithMemory

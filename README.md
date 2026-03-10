@@ -77,49 +77,54 @@ http://localhost:8080/url-shortener-ozon/i9F9AvSymi
 ```
 ├── .github/             
 │    └── workflows/
-│        └── tests.yml              # GitHub Actions для запуска тестов
+│        └── tests.yml               # GitHub Actions для запуска тестов
 ├── cmd/app/
-│    └── main.go                    # Entrypoint - запуск приложения
+│    └── main.go                     # Entrypoint - запуск приложения
 ├── internal/
-│    ├── adapters/                  # Адаптеры для внешних систем
-│    │   ├── controller/http/urlapi # Для работы со входящими и выходящими JSON структурами
-│    │   └── repository/            # Для работы со структурами репозитория
 │    ├── app/
-│    │   └── app.go                 # Инициализация приложения
-│    ├── apperror/                  # Кастомные ошибки приложения
-│    ├── controller/                # Слой контроллеров (обработчики HTTP)
+│    │   └── app.go                  # Инициализация приложения
+│    ├── apperror/                   # Кастомные ошибки приложения
+│    ├── controller/                 # Слой контроллеров (обработчики HTTP)
 │    │   └── http/
+│    │       ├── entities/           # DTO модели данных для HTTP слоя
 │    │       └── v1/
-│    │           └── urlshortener/  # Хендлеры для URL
-│    ├── domain/                    # Сущности бизнес-логики
-│    │   ├── entities/              # Модели данных
-│    │   └── usecase/               # Слой бизнес-логики
-│    │       ├── memory/            # Реализация сохранения во внутреннюю память
-│    │       └── postgres/          # Реализация сохранения в базу данных
+│    │           └── urlshortener/   # Хендлеры для URL
+│    ├── domain/                     # Сущности бизнес-логики
+│    │   ├── entities/               # Модели данных
+│    │   └── usecase/                # Слой бизнес-логики
+│    │       ├── url_usecase.go      # Реализация бизнес-логики
+│    │       └── url_usecase_test.go # Тестирование бизнес-логики
 │    └── repository/url/
-│        ├── memory/                # Инициализация и обращение во внутреннюю память
-│        └── postgres/              # Инициализация и обращение в базы данных
+│        ├── entities/               # SQL модели данных
+│        └── url/
+│            ├── memory/
+│            │   ├── init.go         # Инициализация in-memory репозитория
+│            │   └── repository.go   # Обращение в репозитрий Postgres
+│            └── postgres/
+│                ├── init.go         # Инициализация Postgres репозитория
+│                └── repository.go   # Обращение в in-memory репозитрий
 ├── pkg/
-│    ├── config/                    # Конфигурация приложения
-│    ├── connectors/                # Подключаемые модули
-│    │   └── pgconnector/           # Подключение PostgreSQL
-│    └── utils/                     # Вспомогательные функции
-│        │── createlogger.go        # Инициализация логгера (zap)
-│        │── generateresponse.go    # Генерация обращений
-│        └── generateshorturl.go    # Генерация коротких ссылок
-├── .config.yaml                    # Конфигурация приложения
-├── .env.example                    # Шаблон переменных окружения
-├── compose.yaml                    # Запуск через Docker
+│    ├── config/                     # Конфигурация приложения
+│    ├── connectors/                 # Подключаемые модули
+│    │   └── pgconnector/            # Подключение PostgreSQL
+│    └── utils/                      # Вспомогательные функции
+│        │── create_logger.go        # Инициализация логгера (zap)
+│        │── generate_response.go    # Генерация обращений
+│        └── generate_short_url.go   # Генерация коротких ссылок
+├── .config.yaml                     # Конфигурация приложения
+├── .env.example                     # Шаблон переменных окружения
+├── compose.yaml                     # Запуск через Docker
 ├── Dockerfile
-├── go.mod                          # Зависимости проекта
-└── urls.sql                        # Схема таблицы для PostgreSQL
+├── go.mod                           # Зависимости проекта
+└── urls.sql                         # Схема таблицы для PostgreSQL
 ```
 
 **Ключевые архитектурные решения:**
-- **Domain layer** - чистая бизнес-логика, независимая от внешних систем
-- **Usecase layer** - оркестрация бизнес-процессов
-- **Adapters layer** - адаптеры для HTTP и баз данных
-- Поддержка двух профилей запуска через Docker Compose
+- **Delivery layer** - обработка HTTP-запросов (контроллеры, middleware);
+- **Domain layer** - чистая бизнес-логика, независимая от внешних систем;
+- **Usecase layer** - оркестрация бизнес-процессов;
+- **Repository layer** - работа с PostgreSQL и in-memory хранилищем (репозитории);
+- Поддержка двух профилей запуска через Docker Compose.
 
 ---
 
@@ -230,27 +235,32 @@ curl -i "http://localhost:8080/url-shortener-ozon/i9F9AvSymi"
 
 ```bash
 # Тесты для in-memory режима
-go test -v ./internal/domain/usecase/... -run TestMemory
+go test -v ./internal/domain/usecase/... -run WithMemory
 
 # Тесты для PostgreSQL режима
-go test -v ./internal/domain/usecase/... -run TestPostgres
+go test -v ./internal/domain/usecase/... -run WithPostgres
 ```
 
 ### Конфигурация
 
-Основные параметры конфигурации задаются в `.config.yaml`:
+Отладочные параметры конфигурации задаются в `.config.yaml`:
 
 ```yaml
 debug: true
 serviceName: url-shortener-ozon
-pgStorage:
-  host: "postgres"
-  port: 5432
-http_server:
-  address: "0.0.0.0:8080"
 ```
 
-Чувствительные данные (пароли) вынесены в `.env` файл.
+Основные данные вынесены в `.env` файл.
+
+```dotenv
+POSTGRES_HOST=your_host
+POSTGRES_PORT=your_port
+POSTGRES_USER=your_db_user
+POSTGRES_PASSWORD=your_db_password
+POSTGRES_DB=urls
+
+HTTP_SERVER_ADDRESS=your_http_server_address
+```
 
 ### Технологии
 
@@ -261,3 +271,4 @@ http_server:
 - **Gin** - HTTP фреймворк
 - **pgx** - драйвер для PostgreSQL
 - **zap** - логирование
+- 

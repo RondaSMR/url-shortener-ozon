@@ -5,13 +5,13 @@ import (
 	"errors"
 	"fmt"
 	"github.com/jackc/pgx/v5"
-	"url-shortener-ozon/internal/adapters/repository"
 	apperor "url-shortener-ozon/internal/apperror"
 	"url-shortener-ozon/internal/domain/entities"
+	repoEntities "url-shortener-ozon/internal/repository/entities"
 )
 
-func (r Repository) CreateShortURL(ctx context.Context, url entities.URLsStruct) error {
-	_, err := r.pool.Exec(ctx, `insert into urls(original_url, short_url) values ($1, $2)`, url.OriginalURL, url.ShortURL)
+func (r Repository) CreateShortPath(ctx context.Context, url entities.URLsStruct) error {
+	_, err := r.pool.Exec(ctx, `insert into urls(original_url, short_path) values ($1, $2)`, url.OriginalURL, url.ShortPath)
 	if err != nil {
 		return err
 	}
@@ -19,20 +19,20 @@ func (r Repository) CreateShortURL(ctx context.Context, url entities.URLsStruct)
 	return nil
 }
 
-func (r Repository) GetShortURL(ctx context.Context, url entities.InOutURL) (entities.InOutURL, error) {
-	row, err := r.pool.Query(ctx, `select original_url as url from urls where short_url = $1`, url.URL)
+func (r Repository) GetOriginalURLByShortPath(ctx context.Context, url entities.RequestData) (entities.ResponseData, error) {
+	row, err := r.pool.Query(ctx, `select original_url as url from urls where short_path = $1`, url.URL)
 	if err != nil {
-		return entities.InOutURL{}, fmt.Errorf("executing query error: %w", err)
+		return entities.ResponseData{}, fmt.Errorf("executing query error: %w", err)
 	}
 	defer row.Close()
 
-	urlRepo, err := pgx.CollectOneRow(row, pgx.RowToStructByName[repository.InOutURL])
+	urlRepo, err := pgx.CollectOneRow(row, pgx.RowToStructByName[repoEntities.RepoURL])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return entities.InOutURL{}, apperor.ErrRepoNotFound
+			return entities.ResponseData{}, apperor.ErrRepoNotFound
 		}
-		return entities.InOutURL{}, fmt.Errorf("selecting url from database error: %w", err)
+		return entities.ResponseData{}, fmt.Errorf("selecting url from database error: %w", err)
 	}
 
-	return repository.AdapterRepoTaskToEntity(urlRepo), nil
+	return urlRepo.RepoToEntity(), nil
 }

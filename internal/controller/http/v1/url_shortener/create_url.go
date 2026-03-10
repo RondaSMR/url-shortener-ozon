@@ -1,17 +1,17 @@
-package urlshortener
+package url_shortener
 
 import (
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strings"
-	"url-shortener-ozon/internal/adapters/controller/http/urlapi"
 	"url-shortener-ozon/internal/apperror"
+	"url-shortener-ozon/internal/controller/http/entities"
 	"url-shortener-ozon/pkg/utils"
 )
 
-// CreateShortURL принимает json запрос и отправляет на обработку
-func (r router) CreateShortURL(c *gin.Context) {
-	var urlInput urlapi.InOutURL
+// CreateShortPath принимает json запрос и отправляет на обработку
+func (r router) CreateShortPath(c *gin.Context) {
+	var urlInput entities.RequestDTOData
 
 	// Парсинг входящего JSON
 	if err := c.ShouldBindJSON(&urlInput); err != nil {
@@ -19,9 +19,9 @@ func (r router) CreateShortURL(c *gin.Context) {
 		return
 	}
 	// Форматирование поступившей структуры
-	pointerURL := urlapi.AdapterHttpURLToEntity(urlInput)
+	pointerURL := urlInput.ToEntity()
 
-	url, err := r.urlUsecase.CreateShortURL(c.Request.Context(), &pointerURL)
+	url, err := r.urlUsecase.CreateShortPath(c.Request.Context(), &pointerURL)
 	if err != nil {
 		if strings.Contains(err.Error(), "validation failed") {
 			apperor.ErrValidation.JsonResponse(c, err)
@@ -32,5 +32,5 @@ func (r router) CreateShortURL(c *gin.Context) {
 	}
 
 	// В случае успеха - возврат сокращенной ссылки
-	c.JSON(http.StatusCreated, utils.GenerateResponse(nil, urlapi.AdapterEntityToHttpURL(url)))
+	c.JSON(http.StatusCreated, utils.GenerateResponse(nil, entities.FromEntity(url)))
 }
